@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Pro Animator - Angad</title>
+    <style>
+        :root {
+            --bg-dark: #1e272e; --panel-bg: #2d3436; --text-light: #dfe6e9; --primary: #00cec9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* --- सेटअप पैनल की डिज़ाइन --- */
+        #setup-panel { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .section { background: var(--panel-bg); padding: 12px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border-left: 3px solid var(--primary); }
+        .section h3 { margin-bottom: 10px; font-size: 15px; color: #74b9ff; border-bottom: 1px solid #444; padding-bottom: 5px; }
+
+        .input-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+        .input-group { display: flex; flex-direction: column; flex: 1; min-width: 110px; }
+        .input-group label { font-size: 11px; margin-bottom: 4px; color: #81ecec; font-weight: bold; display: flex; justify-content: space-between;}
+        input[type="text"], input[type="number"], select { padding: 6px; border-radius: 4px; border: none; background: #dfe6e9; color: #2d3436; font-weight: bold; width: 100%; font-size: 13px;}
+        
+        .switch-row { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; background: #222f3e; padding: 5px 10px; border-radius: 5px;}
+        .switch-row label { font-size: 13px; font-weight: bold; color: #00d2d3;}
+
+        /* स्लाइडर्स (Colors & Shadows) */
+        .slider-box { background: #222f3e; padding: 8px; border-radius: 6px; margin-bottom: 8px; }
+        .slider-box label.title { font-size: 12px; font-weight: bold; color: #ff9f43; display: flex; justify-content: space-between; margin-bottom: 5px;}
+        .color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #fff; }
+        
+        .range-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .range-wrap span { font-size: 10px; width: 35px; color: #b2bec3; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none; background: #636e72; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid #2d3436; cursor: pointer; }
+        
+        .hue-slider { background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00) !important; }
+        .light-slider { background: linear-gradient(to right, #000, #888, #fff) !important; }
+
+        #start-btn { background: #00b894; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; margin-bottom: 5px; position: sticky; bottom: 0; z-index: 10; box-shadow: 0 -4px 10px rgba(0,0,0,0.5);}
+        
+        /* --- ग्रीन स्क्रीन और एनीमेशन --- */
+        #record-screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; justify-content: center; align-items: center; z-index: 100; }
+        #the-container { display: flex; align-items: center; gap: 5px; position: relative; opacity: 0; }
+        
+        #dot-badge {
+            display: none; justify-content: center; align-items: center;
+            border-radius: 50%; color: white; font-size: 24px; font-weight: bold;
+            z-index: 2; overflow: hidden; text-align: center; flex-shrink: 0;
+        }
+
+        #the-box {
+            display: flex; justify-content: center; align-items: center;
+            padding: 10px; font-size: 28px; font-weight: bold; text-align: center; 
+            position: relative; overflow: hidden; transition: all 0.3s ease;
+        }
+
+        /* Border Animations */
+        .border-spin { position: relative; }
+        .border-spin::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(transparent, transparent, transparent, #00d2d3); animation: rotateSpin 2s linear infinite; z-index: -2; }
+        .border-spin::after { content: ''; position: absolute; inset: var(--b-width); background: inherit; border-radius: inherit; z-index: -1; }
+        @keyframes rotateSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .border-glow { animation: pulseGlow 1.5s infinite alternate; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px currentColor, inset 0 0 5px currentColor; } 100% { box-shadow: 0 0 20px currentColor, inset 0 0 10px currentColor; } }
+
+        /* --- 10 Entry Animations --- */
+        .anim-in-slide-left { animation: inSlideLeft 1s forwards; } @keyframes inSlideLeft { 0%{transform: translateX(-150vw);opacity:0;} 100%{transform: translateX(0);opacity:1;} }
+        .anim-in-slide-right { animation: inSlideRight 1s forwards; } @keyframes inSlideRight { 0%{transform: translateX(150vw);opacity:0;} 100%{transform: translateX(0);opacity:1;} }
+        .anim-in-slide-up { animation: inSlideUp 1s forwards; } @keyframes inSlideUp { 0%{transform: translateY(150vh);opacity:0;} 100%{transform: translateY(0);opacity:1;} }
+        .anim-in-slide-down { animation: inSlideDown 1s forwards; } @keyframes inSlideDown { 0%{transform: translateY(-150vh);opacity:0;} 100%{transform: translateY(0);opacity:1;} }
+        .anim-in-pop { animation: inPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; } @keyframes inPop { 0%{transform: scale(0);opacity:0;} 100%{transform: scale(1);opacity:1;} }
+        .anim-in-zoom { animation: inZoom 1s ease-out forwards; } @keyframes inZoom { 0%{transform: scale(3);opacity:0;} 100%{transform: scale(1);opacity:1;} }
+        .anim-in-flip-x { animation: inFlipX 1s forwards; } @keyframes inFlipX { 0%{transform: perspective(400px) rotateX(90deg);opacity:0;} 100%{transform: perspective(400px) rotateX(0deg);opacity:1;} }
+        .anim-in-flip-y { animation: inFlipY 1s forwards; } @keyframes inFlipY { 0%{transform: perspective(400px) rotateY(90deg);opacity:0;} 100%{transform: perspective(400px) rotateY(0deg);opacity:1;} }
+        .anim-in-bounce { animation: inBounce 1s forwards; } @keyframes inBounce { 0%{transform: translateY(-300px);opacity:0;} 40%{transform: translateY(30px);opacity:1;} 70%{transform: translateY(-15px);} 100%{transform: translateY(0);opacity:1;} }
+        .anim-in-rotate { animation: inRotate 1s forwards; } @keyframes inRotate { 0%{transform: rotate(-200deg) scale(0);opacity:0;} 100%{transform: rotate(0) scale(1);opacity:1;} }
+
+        /* --- 10 Exit Animations --- */
+        .anim-out-slide-left { animation: outSlideLeft 1s forwards; } @keyframes outSlideLeft { 0%{transform: translateX(0);opacity:1;} 100%{transform: translateX(-150vw);opacity:0;} }
+        .anim-out-slide-right { animation: outSlideRight 1s forwards; } @keyframes outSlideRight { 0%{transform: translateX(0);opacity:1;} 100%{transform: translateX(150vw);opacity:0;} }
+        .anim-out-slide-up { animation: outSlideUp 1s forwards; } @keyframes outSlideUp { 0%{transform: translateY(0);opacity:1;} 100%{transform: translateY(-150vh);opacity:0;} }
+        .anim-out-slide-down { animation: outSlideDown 1s forwards; } @keyframes outSlideDown { 0%{transform: translateY(0);opacity:1;} 100%{transform: translateY(150vh);opacity:0;} }
+        .anim-out-pop { animation: outPop 0.6s forwards; } @keyframes outPop { 0%{transform: scale(1);opacity:1;} 100%{transform: scale(0);opacity:0;} }
+        .anim-out-zoom { animation: outZoom 1s ease-in forwards; } @keyframes outZoom { 0%{transform: scale(1);opacity:1;} 100%{transform: scale(3);opacity:0;} }
+        .anim-out-flip-x { animation: outFlipX 1s forwards; } @keyframes outFlipX { 0%{transform: perspective(400px) rotateX(0deg);opacity:1;} 100%{transform: perspective(400px) rotateX(90deg);opacity:0;} }
+        .anim-out-flip-y { animation: outFlipY 1s forwards; } @keyframes outFlipY { 0%{transform: perspective(400px) rotateY(0deg);opacity:1;} 100%{transform: perspective(400px) rotateY(90deg);opacity:0;} }
+        .anim-out-drop { animation: outDrop 1s forwards; } @keyframes outDrop { 0%{transform: translateY(0);opacity:1;} 100%{transform: translateY(300px);opacity:0;} }
+        .anim-out-rotate { animation: outRotate 1s forwards; } @keyframes outRotate { 0%{transform: rotate(0) scale(1);opacity:1;} 100%{transform: rotate(200deg) scale(0);opacity:0;} }
+        
+        
+        
+        
+        
+        
+                #the-box {
+            display: flex; justify-content: center; align-items: center;
+            padding: 10px; font-size: 28px; font-weight: bold; text-align: center; 
+            position: relative; transition: all 0.3s ease;
+            /* overflow: hidden; को यहाँ से हटा दिया गया है ताकि ग्लो बाहर दिख सके */
+        }
+
+        /* Border Animations*/
+        border-spin { position: relative; }
+        .border-spin::before { 
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; 
+            /* अब यह आपके चुने हुए बॉर्डर कलर (var(--border-color)) को लेगा */
+            background: conic-gradient(#000000, blue, red, var(--border-color)); 
+            animation: rotateSpin 2s linear infinite; z-index: -2; 
+        }
+        .border-spin::after { 
+            content: ''; position: absolute; inset: var(--b-width); 
+            background: var(--box-bg); border-radius: inherit; z-index: -1;
+        }
+        
+        
+        @keyframes rotateSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .border-glow { animation: pulseGlow 1.5s infinite alternate; }
+        @keyframes pulseGlow { 
+            0% { box-shadow: 0 0 5px var(--border-color), inset 0 0 5px var(--border-color); } 
+            100% { box-shadow: 0 0 20px var(--border-color), inset 0 0 10px var(--border-color); } 
+        }
+        
+        
+        
+        
+        
+        
+        
+                /* --- Lock Button Design --- */
+        .lock-toggle {
+            float: right;
+            cursor: pointer;
+            font-size: 16px;
+            user-select: none;
+            transition: 0.2s;
+        }
+        .lock-toggle:active { transform: scale(0.8); }
+        
+        /* जब लॉक ऑन हो तो स्लाइडर और इनपुट का लुक */
+        input:disabled, select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="setup-panel">
+        
+        <!-- Section 1: Dimensions & Advanced Border Radius -->
+        <div class="section">
+<h3>1. डिब्बे का साइज़ और गोल आकार (Radius) <span class="lock-toggle" data-lock="sec1">🔓</span></h3>
+            <div class="input-row">
+                <div class="input-group"><label>बॉक्स Width</label><input type="number" id="box-w" value="400" data-save></div>
+                <div class="input-group"><label>बॉक्स Height</label><input type="number" id="box-h" value="80" data-save></div>
+                <div class="input-group"><label>डॉट Width</label><input type="number" id="dot-w" value="70" data-save></div>
+                <div class="input-group"><label>डॉट Height</label><input type="number" id="dot-h" value="70" data-save></div>
+            </div>
+            
+            <div class="slider-box" style="border-left-color: #00cec9;">
+                <label class="title">बॉर्डर रेडियस (0% से 100%) <span id="rad-val-all">0%</span></label>
+                <div class="range-wrap"><span style="width:50px; font-weight:bold; color:#00cec9;">ALL (सब)</span><input type="range" id="rad-all" min="0" max="100" value="0" data-save></div>
+                <hr style="border:0; border-top:1px solid #444; margin:5px 0;">
+                <div class="range-wrap"><span>Top-L</span><input type="range" id="rad-tl" min="0" max="100" value="0" data-save><span id="val-tl">0%</span></div>
+                <div class="range-wrap"><span>Top-R</span><input type="range" id="rad-tr" min="0" max="100" value="0" data-save><span id="val-tr">0%</span></div>
+                <div class="range-wrap"><span>Bot-R</span><input type="range" id="rad-br" min="0" max="100" value="0" data-save><span id="val-br">0%</span></div>
+                <div class="range-wrap"><span>Bot-L</span><input type="range" id="rad-bl" min="0" max="100" value="0" data-save><span id="val-bl">0%</span></div>
+            </div>
+        </div>
+
+        <!-- Section 2: Colors -->
+        <div class="section">
+          <h3>2. कलर्स (Background, Text & Border) <span class="lock-toggle" data-lock="sec2">🔓</span></h3>
+
+            <div class="slider-box"><label class="title">ग्रीन स्क्रीन बैकग्राउंड <div class="color-preview" id="bg-cp"></div></label><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="bg-h" value="120" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="bg-l" value="50" max="100" data-save></div></div>
+            
+            <div class="slider-box"><label class="title">बॉक्स का कलर <div class="color-preview" id="box-bg-cp"></div></label><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="box-bg-h" value="200" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="box-bg-l" value="20" max="100" data-save></div></div>
+            
+            <div class="slider-box"><label class="title">टेक्स्ट का कलर <div class="color-preview" id="text-cp"></div></label><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="text-h" value="0" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="text-l" value="100" max="100" data-save></div></div>
+            
+            <div class="slider-box"><label class="title">बॉक्स बॉर्डर कलर <div class="color-preview" id="box-border-cp"></div></label><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="box-border-h" value="180" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="box-border-l" value="50" max="100" data-save></div></div>
+                        <!-- डॉट का अलग बैकग्राउंड और टेक्स्ट कलर -->
+            <div class="slider-box">
+                <label class="title">डॉट (Badge) बैकग्राउंड <div class="color-preview" id="dot-bg-cp"></div></label>
+                <div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="dot-bg-h" value="350" max="360" data-save></div>
+                <div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="dot-bg-l" value="50" max="100" data-save></div>
+            </div>
+
+            <div class="slider-box">
+                <label class="title">डॉट (Badge) टेक्स्ट कलर <div class="color-preview" id="dot-text-cp"></div></label>
+                <div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="dot-text-h" value="0" max="360" data-save></div>
+                <div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="dot-text-l" value="100" max="100" data-save></div>
+            </div>
+
+            <div class="slider-box"><label class="title">डॉट (Badge) बॉर्डर कलर <div class="color-preview" id="dot-border-cp"></div></label><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="dot-border-h" value="0" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="dot-border-l" value="100" max="100" data-save></div></div>
+            
+            <div class="input-row">
+                <div class="input-group"><label>बॉर्डर की मोटाई</label><input type="number" id="border-width" value="4" data-save></div>
+                <div class="input-group"><label>बॉर्डर एनीमेशन (Style)</label><select id="border-style" data-save><option value="solid">सिंपल सॉलिड</option><option value="spin">घूमता हुआ ग्रेडिएंट (Spinning)</option><option value="glow">चमकता हुआ (Glowing)</option><option value="dashed">डैश लाइन</option></select></div>
+            </div>
+        </div>
+
+        <!-- Section 3: Shadows -->
+        <div class="section">
+<h3>3. शैडो (Shadow Control) <span class="lock-toggle" data-lock="sec3">🔓</span></h3>
+
+            <div class="slider-box"><label class="title">बॉक्स की शैडो <div class="color-preview" id="box-sh-cp"></div></label><div class="range-wrap"><span>X-अक्ष</span><input type="range" id="box-sh-x" min="-50" max="50" value="10" data-save></div><div class="range-wrap"><span>Y-अक्ष</span><input type="range" id="box-sh-y" min="-50" max="50" value="10" data-save></div><div class="range-wrap"><span>Blur</span><input type="range" id="box-sh-b" min="0" max="50" value="15" data-save></div><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="box-sh-h" value="0" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="box-sh-l" value="0" max="100" data-save></div></div>
+            
+            <div class="slider-box"><label class="title">डॉट की शैडो <div class="color-preview" id="dot-sh-cp"></div></label><div class="range-wrap"><span>X-अक्ष</span><input type="range" id="dot-sh-x" min="-50" max="50" value="5" data-save></div><div class="range-wrap"><span>Y-अक्ष</span><input type="range" id="dot-sh-y" min="-50" max="50" value="5" data-save></div><div class="range-wrap"><span>Blur</span><input type="range" id="dot-sh-b" min="0" max="50" value="10" data-save></div><div class="range-wrap"><span>Hue</span><input type="range" class="hue-slider" id="dot-sh-h" value="0" max="360" data-save></div><div class="range-wrap"><span>Light</span><input type="range" class="light-slider" id="dot-sh-l" value="0" max="100" data-save></div></div>
+        </div>
+
+        <!-- Section 4: Text, Typing & Animations -->
+        <div class="section">
+<h3>4. टेक्स्ट, टाइपिंग और एनीमेशन <span class="lock-toggle" data-lock="sec4">🔓</span></h3>
+
+            <div class="input-group" style="margin-bottom:10px;">
+                <label>टेक्स्ट ('1. Hello' लिखेंगे तो 1 डॉट में आएगा)</label>
+                <input type="text" id="main-text" value="1. Code With Angad" data-save>
+            </div>
+            
+            <div class="switch-row">
+                <label>टाइपराइटर एनीमेशन ऑन रखें?</label>
+                <input type="checkbox" id="type-toggle" checked style="width:18px; height:18px;" data-save>
+            </div>
+
+            <div class="input-row" style="margin-top:10px;">
+                <div class="input-group"><label>टाइपिंग स्पीड (ms)</label><input type="number" id="type-speed" value="100" data-save></div>
+                <div class="input-group"><label>स्क्रीन पर रुकने का समय (Sec)</label><input type="number" id="stay-time" value="3" data-save></div>
+            </div>
+            
+            <div class="input-row" style="margin-top:10px;">
+                <div class="input-group"><label>Entry (आना)</label>
+                    <select id="anim-in" data-save>
+                        <option value="anim-in-slide-left">Slide Left</option><option value="anim-in-slide-right">Slide Right</option>
+                        <option value="anim-in-slide-up">Slide Up</option><option value="anim-in-slide-down">Slide Down</option>
+                        <option value="anim-in-pop">Pop Up</option><option value="anim-in-zoom">Zoom In</option>
+                        <option value="anim-in-flip-x">Flip X</option><option value="anim-in-flip-y">Flip Y</option>
+                        <option value="anim-in-bounce">Bounce In</option><option value="anim-in-rotate">Rotate In</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Exit (जाना)</label>
+                    <select id="anim-out" data-save>
+                        <option value="anim-out-slide-left">Slide Left Out</option><option value="anim-out-slide-right">Slide Right Out</option>
+                        <option value="anim-out-slide-up">Slide Up Out</option><option value="anim-out-slide-down">Slide Down Out</option>
+                        <option value="anim-out-pop">Pop Out</option><option value="anim-out-zoom">Zoom Out</option>
+                        <option value="anim-out-flip-x">Flip X Out</option><option value="anim-out-flip-y">Flip Y Out</option>
+                        <option value="anim-out-drop">Drop Down</option><option value="anim-out-rotate">Rotate Out</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button id="start-btn">▶ स्टार्ट एनीमेशन</button>
+    </div>
+
+    <!-- ग्रीन स्क्रीन -->
+    <div id="record-screen">
+        <div id="the-container">
+            <div id="dot-badge"></div>
+            <div id="the-box"><span id="the-text"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. LOCAL STORAGE LOGIC (Auto-Save) ---
+        const allInputs = document.querySelectorAll('[data-save]');
+        
+        function loadSettings() {
+            allInputs.forEach(inp => {
+                let saved = localStorage.getItem('angad_' + inp.id);
+                if(saved !== null) {
+                    if(inp.type === 'checkbox') inp.checked = (saved === 'true');
+                    else inp.value = saved;
+                }
+            });
+        }
+        
+        allInputs.forEach(inp => {
+            inp.addEventListener('input', () => {
+                if(inp.type === 'checkbox') localStorage.setItem('angad_' + inp.id, inp.checked);
+                else localStorage.setItem('angad_' + inp.id, inp.value);
+            });
+        });
+        
+        loadSettings(); // पेज लोड होते ही पुरानी सेटिंग वापस लाना
+
+        // --- 2. COLOR PREVIEW LOGIC ---
+        function getColor(hId, lId, cpId) {
+            let h = document.getElementById(hId).value;
+            let l = document.getElementById(lId).value;
+            let color = `hsl(${h}, 100%, ${l}%)`;
+            if(cpId) document.getElementById(cpId).style.backgroundColor = color;
+            return color;
+        }
+
+        const colorSliders = document.querySelectorAll('.hue-slider, .light-slider');
+        function updateAllColors() {
+            getColor('bg-h', 'bg-l', 'bg-cp');
+            getColor('box-bg-h', 'box-bg-l', 'box-bg-cp');
+            getColor('text-h', 'text-l', 'text-cp');
+            getColor('box-border-h', 'box-border-l', 'box-border-cp');
+            getColor('dot-border-h', 'dot-border-l', 'dot-border-cp');
+            getColor('box-sh-h', 'box-sh-l', 'box-sh-cp');
+            getColor('dot-sh-h', 'dot-sh-l', 'dot-sh-cp');
+              // ये दो लाइनें नई जोड़नी हैं
+            getColor('dot-bg-h', 'dot-bg-l', 'dot-bg-cp');
+            getColor('dot-text-h', 'dot-text-l', 'dot-text-cp');
+        }
+        colorSliders.forEach(slider => slider.addEventListener('input', updateAllColors));
+        updateAllColors();
+
+// --- 3. BORDER RADIUS LOGIC ---
+        const radAll = document.getElementById('rad-all');
+        const radTL = document.getElementById('rad-tl'); const radTR = document.getElementById('rad-tr');
+        const radBR = document.getElementById('rad-br'); const radBL = document.getElementById('rad-bl');
+        
+        function updateRadiusLabels() {
+            document.getElementById('rad-val-all').innerText = radAll.value + '%';
+            document.getElementById('val-tl').innerText = radTL.value + '%';
+            document.getElementById('val-tr').innerText = radTR.value + '%';
+            document.getElementById('val-br').innerText = radBR.value + '%';
+            document.getElementById('val-bl').innerText = radBL.value + '%';
+        }
+
+        radAll.addEventListener('input', (e) => {
+            radTL.value = radTR.value = radBR.value = radBL.value = e.target.value;
+            radTL.dispatchEvent(new Event('input')); // Save to local storage
+            radTR.dispatchEvent(new Event('input'));
+            radBR.dispatchEvent(new Event('input'));
+            radBL.dispatchEvent(new Event('input'));
+            updateRadiusLabels();
+        });
+        
+        [radTL, radTR, radBR, radBL].forEach(r => r.addEventListener('input', updateRadiusLabels));
+        updateRadiusLabels();
+
+        // --- 4. SOUND MAPS ---
+        const entrySounds = {
+            'anim-in-slide-left': 'sounds/entry-slide.mp3', 'anim-in-slide-right': 'entry-slide.mp3',
+            'anim-in-pop': 'entry-pop.mp3', 'anim-in-bounce': 'entry-bounce.mp3'
+        }; // Add remaining mp3 file names as needed
+        const exitSounds = {
+            'anim-out-slide-left': 'exit-slide.mp3', 'anim-out-pop': 'exit-pop.mp3'
+        };
+
+        let typeSound, typingInterval;
+        let timers = [];
+
+        // --- 5. START ANIMATION LOGIC ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const setupPanel = document.getElementById('setup-panel');
+            const recordScreen = document.getElementById('record-screen');
+            const container = document.getElementById('the-container');
+            const theBox = document.getElementById('the-box');
+            const dotBadge = document.getElementById('dot-badge');
+            const theText = document.getElementById('the-text');
+
+            // Reset
+            theText.innerHTML = '';
+            timers.forEach(t => clearTimeout(t));
+            clearInterval(typingInterval);
+            if(typeSound) typeSound.pause();
+            
+            // Apply Background
+            recordScreen.style.backgroundColor = getColor('bg-h', 'bg-l');
+            
+            // Apply Dimensions
+            theBox.style.width = document.getElementById('box-w').value + 'px';
+            theBox.style.height = document.getElementById('box-h').value + 'px';
+            dotBadge.style.width = document.getElementById('dot-w').value + 'px';
+            dotBadge.style.height = document.getElementById('dot-h').value + 'px';
+
+            // Apply Border Radius
+            theBox.style.borderRadius = `${radTL.value}% ${radTR.value}% ${radBR.value}% ${radBL.value}%`;
+
+            // Apply Colors
+            theBox.style.backgroundColor = getColor('box-bg-h', 'box-bg-l');
+            theBox.style.color = getColor('text-h', 'text-l');
+            /*dotBadge.style.backgroundColor = getColor('box-bg-h', 'box-bg-l');*/ // Match dot bg to box bg
+                        // डॉट (Badge) का अलग से बैकग्राउंड और टेक्स्ट कलर अप्लाई करना
+            dotBadge.style.backgroundColor = getColor('dot-bg-h', 'dot-bg-l');
+            dotBadge.style.color = getColor('dot-text-h', 'dot-text-l');
+
+            
+            
+
+            // Apply Shadows
+            let bc = getColor('box-sh-h', 'box-sh-l');
+            theBox.style.boxShadow = `${document.getElementById('box-sh-x').value}px ${document.getElementById('box-sh-y').value}px ${document.getElementById('box-sh-b').value}px ${bc}`;
+            let dc = getColor('dot-sh-h', 'dot-sh-l');
+            dotBadge.style.boxShadow = `${document.getElementById('dot-sh-x').value}px ${document.getElementById('dot-sh-y').value}px ${document.getElementById('dot-sh-b').value}px ${dc}`;
+
+            // Apply Borders
+          /*  let boxBorderColor = getColor('box-border-h', 'box-border-l');
+            let bWidth = document.getElementById('border-width').value + 'px';
+            let borderStyle = document.getElementById('border-style').value;
+            
+            theBox.classList.remove('border-glow', 'border-spin');
+            theBox.style.setProperty('--b-width', bWidth); // For spin effect
+            
+            if(borderStyle === 'solid') theBox.style.border = `${bWidth} solid ${boxBorderColor}`;
+            else if(borderStyle === 'dashed') theBox.style.border = `${bWidth} dashed ${boxBorderColor}`;
+            else if(borderStyle === 'glow') { theBox.style.border = `${bWidth} solid ${boxBorderColor}`; theBox.classList.add('border-glow'); }
+            else if(borderStyle === 'spin') { theBox.style.border = `${bWidth} solid transparent`; theBox.classList.add('border-spin'); }
+
+            dotBadge.style.border = `${bWidth} solid ${getColor('dot-border-h', 'dot-border-l')}`;*/
+                        // Apply Borders
+            let boxBorderColor = getColor('box-border-h', 'box-border-l');
+            let bWidth = document.getElementById('border-width').value + 'px';
+            let borderStyle = document.getElementById('border-style').value;
+            
+            theBox.classList.remove('border-glow', 'border-spin');
+            
+            // CSS को जावास्क्रिप्ट से कलर भेजना
+            theBox.style.setProperty('--b-width', bWidth); 
+            theBox.style.setProperty('--border-color', boxBorderColor); 
+            theBox.style.setProperty('--box-bg', getColor('box-bg-h', 'box-bg-l')); 
+
+            // बॉर्डर स्टाइल के हिसाब से सेटिंग
+            if (borderStyle === 'solid') {
+                theBox.style.border = `${bWidth} solid ${boxBorderColor}`;
+                theBox.style.overflow = 'visible';
+            } 
+            else if (borderStyle === 'dashed') {
+                theBox.style.border = `${bWidth} dashed ${boxBorderColor}`;
+                theBox.style.overflow = 'visible';
+            } 
+            else if (borderStyle === 'glow') {
+                theBox.style.border = `${bWidth} solid ${boxBorderColor}`;
+                theBox.classList.add('border-glow');
+                theBox.style.overflow = 'visible'; // ग्लो को बाहर चमकने देने के लिए 
+            } 
+            else if (borderStyle === 'spin') {
+                theBox.style.border = `${bWidth} solid transparent`;
+                theBox.style.backgroundColor = 'transparent'; // एनीमेशन दिखने के लिए मेन बैकग्राउंड हटाना 
+                theBox.classList.add('border-spin');
+                theBox.style.overflow = 'hidden'; // स्पिन को गोल कोनों (Radius) के अंदर रखने के लिए
+            }
+
+            dotBadge.style.border = `${bWidth} solid ${getColor('dot-border-h', 'dot-border-l')}`;
+
+            
+            
+            
+            
+            
+            
+
+            // Text & Dot Logic
+            let rawText = document.getElementById('main-text').value;
+            let match = rawText.match(/^([A-Za-z0-9]+)\.\s*(.*)/);
+            let textToType = rawText;
+            
+            if(match) {
+                dotBadge.style.display = 'flex';
+                dotBadge.innerText = match[1];
+                textToType = match[2];
+            } else {
+                dotBadge.style.display = 'none';
+            }
+
+            // Show Screen & Run Entry Animation
+            setupPanel.style.display = 'none';
+            recordScreen.style.display = 'flex';
+            let animIn = document.getElementById('anim-in').value;
+            let animOut = document.getElementById('anim-out').value;
+            container.className = animIn;
+
+            // PLAY ENTRY SOUND
+            let entryAudioFile = entrySounds[animIn] || 'default-entry.mp3';
+            new Audio(entryAudioFile).play().catch(e => console.log('Entry sound off or missing'));
+
+            // Typing Logic after 1s (Entry Animation length)
+            let isTypingOn = document.getElementById('type-toggle').checked;
+            let typeSpeed = parseInt(document.getElementById('type-speed').value);
+            let stayTime = parseFloat(document.getElementById('stay-time').value) * 1000;
+
+            let t1 = setTimeout(() => {
+                if(isTypingOn) {
+                    let i = 0;
+                    typeSound = new Audio('typing-sound.mp3');
+                    typeSound.loop = true;
+                    typeSound.play().catch(e => console.log('Typing sound missing'));
+
+                    typingInterval = setInterval(() => {
+                        theText.innerHTML += textToType.charAt(i);
+                        i++;
+                        if(i >= textToType.length) {
+                            clearInterval(typingInterval);
+                            if(typeSound) typeSound.pause();
+                            triggerExit(stayTime, animOut, container); // Go to exit
+                        }
+                    }, typeSpeed);
+                } else {
+                    theText.innerHTML = textToType;
+                    triggerExit(stayTime, animOut, container); // Go to exit directly
+                }
+            }, 1000);
+            timers.push(t1);
+
+            function triggerExit(delay, exitClass, el) {
+                let t2 = setTimeout(() => {
+                    el.className = exitClass;
+                    // PLAY EXIT SOUND
+                    let exitAudioFile = exitSounds[exitClass] || 'default-exit.mp3';
+                    new Audio(exitAudioFile).play().catch(e => console.log('Exit sound off'));
+
+                    let t3 = setTimeout(() => {
+                        recordScreen.style.display = 'none';
+                        setupPanel.style.display = 'flex';
+                    }, 1000); // 1s for exit animation
+                    timers.push(t3);
+                }, delay);
+                timers.push(t2);
+            }
+        });
+
+        // Tap Screen to exit early
+        document.getElementById('record-screen').addEventListener('click', () => {
+            timers.forEach(t => clearTimeout(t));
+            clearInterval(typingInterval);
+            if(typeSound) typeSound.pause();
+            document.getElementById('record-screen').style.display = 'none';
+            document.getElementById('setup-panel').style.display = 'flex';
+        });
+        
+        
+        
+        
+        
+        
+        
+        
+                // --- 6. LOCK SYSTEM LOGIC (ताला लगाने का सिस्टम) ---
+        document.querySelectorAll('.lock-toggle').forEach(lockBtn => {
+            let lockId = lockBtn.getAttribute('data-lock');
+            let section = lockBtn.closest('.section'); 
+            
+            // सेक्शन के अंदर के सभी इनपुट और स्लाइडर को पकड़ना
+            let inputs = section.querySelectorAll('input, select');
+            
+            // लोकल स्टोरेज से लॉक का पुराना डेटा निकालना
+            let isLocked = localStorage.getItem('angad_lock_' + lockId) === 'true';
+            
+            // लॉक अप्लाई करने का फंक्शन
+            function applyLock() {
+                lockBtn.innerText = isLocked ? '🔒' : '🔓'; // आइकॉन बदलना
+                inputs.forEach(inp => {
+                    inp.disabled = isLocked; // स्लाइडर/टेक्स्ट को डिसेबल करना
+                });
+                // लॉक होने पर सेक्शन को हल्का सा धुंधला (0.7 opacity) कर देना
+                section.style.opacity = isLocked ? '0.7' : '1';
+            }
+            
+            applyLock(); // पेज लोड होते ही लॉक चेक करना
+            
+            // जब ताले पर क्लिक हो
+            lockBtn.addEventListener('click', () => {
+                isLocked = !isLocked;
+                localStorage.setItem('angad_lock_' + lockId, isLocked); // मेमोरी में सेव करना
+                applyLock();
+            });
+        });
+
+    </script>
+</body>
+</html>
