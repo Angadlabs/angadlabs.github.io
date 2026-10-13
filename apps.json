@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Exam Sathi",
+    "category": "Education",
+    "icon": "https://via.placeholder.com/100/007bff/ffffff?text=ES",
+    "screenshots": ["https://via.placeholder.com/200x300/e0e0e0/000000?text=Screen+1", "https://via.placeholder.com/200x300/e0e0e0/000000?text=Screen+2"],
+    "description": "यह एक शानदार क्विज और स्टडी ऐप है।",
+    "version": "1.0",
+    "size": "5 MB",
+    "download_link": "#",
+    "install_steps": ["APK डाउनलोड करें", "Unknown Sources को On करें", "Install पर क्लिक करें और पढ़ाई शुरू करें!"]
+  }
+]
