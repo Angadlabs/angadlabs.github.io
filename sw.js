@@ -5,7 +5,7 @@ const ASSETS = [
   'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/style.css',
   'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/script.js',
   'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/app.json',
-  'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/manifest.json'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
