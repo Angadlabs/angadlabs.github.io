@@ -96,7 +96,7 @@ window.addEventListener('appinstalled', () => {
 // ==========================================
 async function loadAppsData() {
   try {
-    let response = await fetch('https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/app.json');
+    let response = await fetch('app.json');
     if (!response.ok) {
       // अगर आपने फाइल का नाम app.js7 रखा है तो उसे लोड करेगा
       response = await fetch('app.js7');
