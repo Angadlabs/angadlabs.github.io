@@ -2,9 +2,9 @@ const CACHE_NAME = 'angad-labs-store-v1';
 const ASSETS = [
   './',
   './index.html',
-  'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/style.css',
-  'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/script.js',
-  'https://cdn.jsdelivr.net/gh/Angadlabs/Angadlabs.github.io@main/app.json',
+  './style.css',
+  './script.js',
+  './app.json',
   './manifest.json'
 ];
 
